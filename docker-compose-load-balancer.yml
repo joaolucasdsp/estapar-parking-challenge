@@ -1,0 +1,27 @@
+version: '3.4'
+
+services:
+  web:
+    image: ${DOCKER_REGISTRY-}EstaparParkingChallenge
+    scale: 3
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: Site/Dockerfile
+    restart: always
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_PASSWORD=PostgresPssw!
+  redis:
+    image: redis:alpine
+  nginx:
+    build:
+      context : ./nginx/
+      dockerfile: Dockerfile
+    depends_on:
+      - web
+    ports:
+      - "8080:8080"
+    restart: always

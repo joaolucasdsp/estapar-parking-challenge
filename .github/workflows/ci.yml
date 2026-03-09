@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore ./EstaparParkingChallenge.sln
+      - name: Check formatting
+        run: dotnet format ./EstaparParkingChallenge.sln --verify-no-changes --no-restore
+      - name: Check analyzers and style
+        run: dotnet format analyzers ./EstaparParkingChallenge.sln --verify-no-changes --no-restore
+      - name: Build (treat warnings as errors)
+        run: dotnet build ./EstaparParkingChallenge.sln --configuration Release --no-restore -warnaserror
+
+  unit-tests:
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore ./EstaparParkingChallenge.sln
+      - name: Build
+        run: dotnet build ./EstaparParkingChallenge.sln --configuration Release --no-restore
+      - name: Run unit tests
+        run: dotnet test ./Tests/EstaparParkingChallenge.Tests.csproj --configuration Release --no-build --filter "TestCategory=Unit"
+
+  integration-tests:
+    needs: [quality, unit-tests]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [PostgreSql, SqlServer]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore ./EstaparParkingChallenge.sln
+      - name: Build
+        run: dotnet build ./EstaparParkingChallenge.sln --configuration Release --no-restore
+
+      - name: Start PostgreSQL
+        if: matrix.database == 'PostgreSql'
+        run: docker run -d --name ci-postgres -e POSTGRES_PASSWORD=admin -p 5432:5432 postgres:14-alpine
+      - name: Wait for PostgreSQL
+        if: matrix.database == 'PostgreSql'
+        run: |
+          for i in {1..20}; do
+            if docker exec ci-postgres pg_isready -U postgres > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL did not become ready in time"
+          exit 1
+
+      - name: Start SQL Server
+        if: matrix.database == 'SqlServer'
+        run: docker run -d --name ci-sqlserver -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD=1StrongPwd!! -p 1433:1433 mcr.microsoft.com/mssql/server:2019-latest
+      - name: Wait for SQL Server
+        if: matrix.database == 'SqlServer'
+        run: |
+          for i in {1..30}; do
+            if docker logs ci-sqlserver 2>&1 | grep -q "SQL Server is now ready for client connections"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "SQL Server did not become ready in time"
+          exit 1
+
+      - name: Test with selected database
+        env:
+          Database: ${{ matrix.database }}
+          ConnectionStrings__DefaultConnection: ${{ matrix.database == 'PostgreSql' && 'Server=localhost; Database=EstaparParkingChallengeTest; Port=5432;user id=postgres; password=admin; Pooling=true;Minimum Pool Size=0;Maximum Pool Size=25;' || 'Server=localhost;Database=EstaparParkingChallenge;User ID=sa;Password=1StrongPwd!!;TrustServerCertificate=True;' }}
+          ASPNETCORE_ENVIRONMENT: Test
+        run: dotnet test ./Tests/EstaparParkingChallenge.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"

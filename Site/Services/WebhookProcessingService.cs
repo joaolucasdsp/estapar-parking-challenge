@@ -149,7 +149,6 @@ public class WebhookProcessingService(
 		activeSession.SpotId = spot.Id;
 		activeSession.IsParked = true;
 		activeSession.Sector = spot.GarageSector.Sector;
-		activeSession.BasePriceAtEntry = spot.GarageSector.BasePrice;
 	}
 
 	private async Task handleExitAsync(DateTimeOffset exitTime, ParkingSessionEntity? activeSession, CancellationToken cancellationToken) {

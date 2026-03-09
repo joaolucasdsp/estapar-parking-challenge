@@ -30,7 +30,6 @@ public class TestDatabaseManager(AppDbContext dbContext) {
 		await dbContext.SaveChangesAsync(cancellationToken);
 
 		dbContext.GarageSpots.Add(new GarageSpotEntity {
-			Id = 1,
 			GarageSectorId = sector.Id,
 			Latitude = -23.561684m,
 			Longitude = -46.655981m,

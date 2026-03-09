@@ -15,6 +15,7 @@ A API gerencia o ciclo completo de estacionamento — entrada, parada e saída d
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Como Executar](#como-executar)
 - [Docker](#docker)
+- [Simulador](#simulador)
 - [Testes](#testes)
 - [Configuração](#configuração)
 - [Decisões Técnicas](#decisões-técnicas)
@@ -275,6 +276,41 @@ docker compose -f docker-compose-load-balancer.yml up --build --scale web=3
 Sobe: **3 instâncias web** + **NGINX** (round-robin na porta 8080) + **postgres** + **redis**
 
 A imagem Docker usa **multi-stage build** com Alpine para mínimo footprint.
+
+---
+
+## Simulador
+
+O projeto inclui um simulador HTTP em `Simulator/` para facilitar testes reais da API principal.
+
+### Subir o simulador
+
+```bash
+dotnet run --project Simulator/EstaparParkingChallenge.Simulator.csproj
+```
+
+- Scalar: `http://localhost:5141/scalar/v1`
+- OpenAPI: `http://localhost:5141/openapi/v1.json`
+
+### Endpoints do simulador
+
+- `GET /garage`
+  - Retorna a configuração da garagem (setores + vagas) no mesmo formato esperado pela API.
+
+- `POST /simulate/event`
+  - Repassa um único evento de webhook para a API principal (`TargetApi.BaseUrl + TargetApi.WebhookPath`).
+
+- `POST /simulate/flow`
+  - Executa fluxo completo `ENTRY -> PARKED -> EXIT` para uma placa.
+
+### Configuração do simulador
+
+Arquivo: `Simulator/appsettings.json`
+
+- `TargetApi.BaseUrl`: URL da API principal (default: `https://localhost:7139`)
+- `TargetApi.WebhookPath`: caminho do webhook (default: `/webhook`)
+- `TargetApi.SecretHeaderName`: header de secret (default: `Webhook-Signature`)
+- `TargetApi.Secret`: secret do webhook (defina se sua API estiver com validação habilitada)
 
 ---
 

@@ -1,0 +1,70 @@
+services:
+  site:
+    image: ${DOCKER_REGISTRY-}estaparparkingchallenge-site
+    build:
+      context: .
+      dockerfile: Site/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      simulator:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Server=postgres; Database=EstaparParkingChallenge; Port=5432;user id=postgres; password=PostgresPssw!; Pooling=true;Minimum Pool Size=0;Maximum Pool Size=25;
+      Redis__ConnectionString: redis:6379
+      SimulatorClient__GarageBaseUrl: http://simulator:8080
+      SimulatorClient__GarageEndpoint: /garage
+      SimulatorClient__GarageConfigCacheMinutes: "1"
+      SimulatorClient__SyncGarageOnStartup: "true"
+      SimulatorClient__UseMockGarageOnFailure: "false"
+      Startup__Database: "1"
+    restart: unless-stopped
+
+  simulator:
+    image: ${DOCKER_REGISTRY-}estaparparkingchallenge-simulator
+    build:
+      context: .
+      dockerfile: Simulator/Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      TargetApi__BaseUrl: http://site:8080
+      TargetApi__WebhookPath: /webhook
+      TargetApi__SecretHeaderName: Webhook-Signature
+      TargetApi__IgnoreTlsErrors: "true"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: EstaparParkingChallenge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PostgresPssw!
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d EstaparParkingChallenge"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - parking-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+volumes:
+  parking-postgres-data:

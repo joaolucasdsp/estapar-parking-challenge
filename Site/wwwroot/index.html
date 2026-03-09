@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parking Manager Live Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <main class="container">
+    <header class="hero">
+      <p class="kicker">Parking Manager</p>
+      <h1>Live Topology Board</h1>
+      <p class="subtitle">Visual state of sections, spots, occupancy and pending vehicle entries.</p>
+    </header>
+
+    <section class="panel summary" id="summary"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Sections</h2>
+        <div class="controls">
+          <button class="btn" id="refreshBtn">Refresh now</button>
+          <span id="lastUpdate" class="muted">waiting for data...</span>
+        </div>
+      </div>
+      <div id="sectors" class="sectors"></div>
+    </section>
+  </main>
+
+  <template id="sectorTemplate">
+    <article class="sector-card">
+      <header class="sector-head">
+        <div>
+          <h3 class="sector-title"></h3>
+          <p class="sector-meta"></p>
+        </div>
+        <div class="badges"></div>
+      </header>
+      <div class="spots-grid"></div>
+    </article>
+  </template>
+
+  <script src="/app.js"></script>
+</body>
+</html>

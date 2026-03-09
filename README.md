@@ -274,6 +274,8 @@ URLs:
 - Site: `http://localhost:8080`
 - Simulator: `http://localhost:8081`
 
+![Site simulation](site-simulation.gif)
+
 Com essa stack voce consegue:
 
 - Visualizar a topologia e estado atual do estacionamento no Site.

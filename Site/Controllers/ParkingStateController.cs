@@ -67,13 +67,13 @@ public class ParkingStateController(
 							activeParkedSessionsBySpot.TryGetValue(spot.Id, out var parkedSession);
 
 							return new {
-							id = spot.Id,
-							lat = spot.Latitude,
-							lng = spot.Longitude,
-							isOccupied = spot.IsOccupied,
-							licensePlate = spot.OccupiedByLicensePlate,
-							entryTime = parkedSession?.EntryTime,
-							state = spot.IsOccupied ? "Occupied" : "Available",
+								id = spot.Id,
+								lat = spot.Latitude,
+								lng = spot.Longitude,
+								isOccupied = spot.IsOccupied,
+								licensePlate = spot.OccupiedByLicensePlate,
+								entryTime = parkedSession?.EntryTime,
+								state = spot.IsOccupied ? "Occupied" : "Available",
 							};
 						}),
 				};

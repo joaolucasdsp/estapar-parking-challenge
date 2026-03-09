@@ -242,9 +242,11 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -lp EstaparParking
 | Recurso           | URL                                     |
 | ------------------ | --------------------------------------- |
 | API                | `https://localhost:7139`                |
+| Dashboard (Site)   | `http://localhost:5139`                 |
 | Scalar (API docs)  | `http://localhost:5139/scalar/v1`       |
 | OpenAPI spec       | `http://localhost:5139/openapi/v1.json` |
 | Health check       | `GET /api/health`                       |
+| Parking state      | `GET /api/parking/state`                |
 
 ### Gerar token JWT (aplicação)
 
@@ -257,6 +259,19 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -- --gen-app-token
 ---
 
 ## Docker
+
+### Stack Site + Simulador (recomendada para demo funcional)
+
+```bash
+docker compose -f docker-compose.site-simulator.yml up --build
+```
+
+Sobe: **site** (API + dashboard), **simulator** (UI interativa + envio de eventos), **postgres** e **redis**.
+
+URLs:
+
+- Site: `http://localhost:8080`
+- Simulator: `http://localhost:8081`
 
 ### Stack básica
 
@@ -291,11 +306,24 @@ dotnet run --project Simulator/EstaparParkingChallenge.Simulator.csproj
 
 - Scalar: `http://localhost:5141/scalar/v1`
 - OpenAPI: `http://localhost:5141/openapi/v1.json`
+- Dashboard (frontend): `http://localhost:5141`
 
 ### Endpoints do simulador
 
+- `GET /`
+  - Dashboard web para simular webhooks e validar health/revenue da API alvo.
+
 - `GET /garage`
   - Retorna a configuração da garagem (setores + vagas) no mesmo formato esperado pela API.
+
+- `GET /target/health`
+  - Faz proxy para `GET /api/health` da API principal.
+
+- `GET /target/revenue?date=YYYY-MM-DD&sector=A`
+  - Faz proxy para `GET /revenue` da API principal.
+
+- `GET /target/parking/state`
+  - Faz proxy para `GET /api/parking/state` da API principal.
 
 - `POST /simulate/event`
   - Repassa um único evento de webhook para a API principal (`TargetApi.BaseUrl + TargetApi.WebhookPath`).
@@ -311,6 +339,7 @@ Arquivo: `Simulator/appsettings.json`
 - `TargetApi.WebhookPath`: caminho do webhook (default: `/webhook`)
 - `TargetApi.SecretHeaderName`: header de secret (default: `Webhook-Signature`)
 - `TargetApi.Secret`: secret do webhook (defina se sua API estiver com validação habilitada)
+- `TargetApi.IgnoreTlsErrors`: ignora erro de certificado HTTPS local no proxy do simulador (default: `true`)
 
 ---
 

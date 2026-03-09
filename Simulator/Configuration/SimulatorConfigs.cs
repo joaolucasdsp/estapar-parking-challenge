@@ -5,14 +5,17 @@ public class TargetApiConfig {
 	public string WebhookPath { get; set; } = "/webhook";
 	public string SecretHeaderName { get; set; } = "Webhook-Signature";
 	public string? Secret { get; set; }
+	public bool IgnoreTlsErrors { get; set; } = true;
 }
 
 public class GarageConfig {
-	public List<GarageSectorSeed> Sectors { get; set; } = [
-		new() { Sector = "A", BasePrice = 10m, MaxCapacity = 40 },
-		new() { Sector = "B", BasePrice = 12m, MaxCapacity = 35 },
-		new() { Sector = "C", BasePrice = 15m, MaxCapacity = 25 },
-	];
+	public string ActiveTopology { get; set; } = "default";
+	public Dictionary<string, List<GarageSectorSeed>> Topologies { get; set; } = [];
+	public List<GarageSectorSeed> Sectors { get; set; } = [];
+}
+
+public class TopologySelectionRequest {
+	public string Name { get; set; } = string.Empty;
 }
 
 public class GarageSectorSeed {

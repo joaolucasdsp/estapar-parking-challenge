@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <DocumentationFile>EstaparParkingChallenge.Simulator.xml</DocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\EstaparParkingChallenge.Simulator.xml</DocumentationFile>
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
 

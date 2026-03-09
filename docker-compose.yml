@@ -1,10 +1,8 @@
-version: '3.4'
-
 services:
   web:
-    image: ${DOCKER_REGISTRY-}EstaparParkingChallenge
+    image: ${DOCKER_REGISTRY-}estaparparkingchallenge
     ports:
-      - 8080:80
+      - 8080:8080
     build:
       context: .
       dockerfile: Site/Dockerfile

@@ -1,9 +1,6 @@
-version: '3.4'
-
 services:
   web:
-    image: ${DOCKER_REGISTRY-}EstaparParkingChallenge
-    scale: 3
+    image: ${DOCKER_REGISTRY-}estaparparkingchallenge
     depends_on:
       - postgres
     build:

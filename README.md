@@ -269,7 +269,7 @@ Sobe: **web** (API) + **postgres** (banco) + **redis** (cache)
 ### Com load balancer (produção)
 
 ```bash
-docker compose -f docker-compose-load-balancer.yml up --build
+docker compose -f docker-compose-load-balancer.yml up --build --scale web=3
 ```
 
 Sobe: **3 instâncias web** + **NGINX** (round-robin na porta 8080) + **postgres** + **redis**

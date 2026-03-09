@@ -61,6 +61,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 var commandArgs = args.ToList();
 if (commandArgs.Count != 0 && args[0] == "--gen-app-token") {
 	using var scope = app.Services.CreateScope();

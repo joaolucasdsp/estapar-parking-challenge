@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parking Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero card">
+      <p class="tag">Simulator</p>
+      <h1>Interactive Parking Topology</h1>
+      <p>Click an available spot to send ENTRY + PARKED. Click an occupied spot to send EXIT for that plate.</p>
+    </header>
+
+    <section class="controls card">
+      <div class="control-row">
+        <label class="control control-plate" for="platePrefix">
+          <span>Plate Prefix</span>
+          <input id="platePrefix" value="SIM" maxlength="4" />
+        </label>
+        <div class="control control-topology">
+          <label for="topologySelect">Topology Profile</label>
+          <div class="inline-field">
+            <select id="topologySelect"></select>
+            <button type="button" id="btnApplyTopology" class="btn btn-ghost btn-inline">Apply + Sync Site</button>
+          </div>
+        </div>
+        <div class="control control-stay">
+          <label for="exitStayMinutes">Stay Minutes (Exit)</label>
+          <input id="exitStayMinutes" type="number" min="1" value="90" />
+          <div class="quick-stay" id="quickStayOptions" role="group" aria-label="Quick stay duration">
+            <button type="button" class="quick-stay-btn" data-minutes="30">30m</button>
+            <button type="button" class="quick-stay-btn" data-minutes="60">60m</button>
+            <button type="button" class="quick-stay-btn is-active" data-minutes="90">90m</button>
+            <button type="button" class="quick-stay-btn" data-minutes="120">120m</button>
+          </div>
+        </div>
+        <label class="control control-sector" for="revenueSector">
+          <span>Sector (Revenue)</span>
+          <input id="revenueSector" value="A" maxlength="20" />
+        </label>
+        <label class="control control-date" for="revenueDate">
+          <span>Date (Revenue)</span>
+          <input id="revenueDate" type="date" />
+        </label>
+      </div>
+      <div class="control-actions">
+        <button id="btnRefresh" class="btn">Refresh State</button>
+        <button id="btnHealth" class="btn btn-ghost">Check Health</button>
+        <button id="btnRevenue" class="btn btn-ghost">Query Revenue</button>
+        <button id="btnClear" class="btn btn-ghost">Clear Log</button>
+      </div>
+      <p id="statusLine" class="status">Loading topology...</p>
+    </section>
+
+    <section class="board card">
+      <div class="board-head">
+        <h2>Parking Map</h2>
+        <span id="updateStamp" class="stamp">no updates yet</span>
+      </div>
+      <div class="board-layout">
+        <div class="map-pane">
+          <div id="summary" class="summary"></div>
+          <div id="topology" class="topology"></div>
+        </div>
+        <aside class="log-pane">
+          <div class="board-head">
+            <h2>Event Log</h2>
+          </div>
+          <pre id="output" class="output"></pre>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <template id="sectorTemplate">
+    <article class="sector">
+      <header class="sector-header">
+        <div>
+          <h3 class="sector-title"></h3>
+          <p class="sector-meta"></p>
+        </div>
+        <div class="sector-badges"></div>
+      </header>
+      <div class="spots"></div>
+    </article>
+  </template>
+
+  <script src="/app.js"></script>
+</body>
+</html>

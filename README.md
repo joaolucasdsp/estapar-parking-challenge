@@ -15,6 +15,7 @@ A API gerencia o ciclo completo de estacionamento — entrada, parada e saída d
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Como Executar](#como-executar)
 - [Docker](#docker)
+- [Simulador](#simulador)
 - [Testes](#testes)
 - [Configuração](#configuração)
 - [Decisões Técnicas](#decisões-técnicas)
@@ -54,8 +55,8 @@ A API gerencia o ciclo completo de estacionamento — entrada, parada e saída d
 │                                                             │
 │  Controllers                                                │
 │  ├── HealthController       GET  /api/health                │
-│  ├── WebhookController      POST /webhook                   │
-│  └── RevenueController      GET  /revenue                   │
+│  ├── WebhookController      POST /api/webhook               │
+│  └── RevenueController      GET  /api/revenue               │
 │                                                             │
 │  Services                                                   │
 │  ├── WebhookProcessingService  (ciclo Entry→Parked→Exit)    │
@@ -91,7 +92,7 @@ Health check para probes de Kubernetes/Docker.
 { "status": "ok", "timestamp": "2026-03-09T10:00:00.000Z" }
 ```
 
-### `POST /webhook`
+### `POST /api/webhook`
 
 Recebe eventos do simulador de estacionamento. Protegido por validação de `webhook secret` em header (configurável).
 
@@ -119,7 +120,7 @@ Recebe eventos do simulador de estacionamento. Protegido por validação de `web
 
 **Response:** `200 OK` (body vazio)
 
-### `GET /revenue?date={date}&sector={sector}`
+### `GET /api/revenue?date={date}&sector={sector}`
 
 Retorna a receita total de um setor em uma data específica.
 
@@ -241,9 +242,12 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -lp EstaparParking
 | Recurso           | URL                                     |
 | ------------------ | --------------------------------------- |
 | API                | `https://localhost:7139`                |
+| Dashboard (Site)   | `http://localhost:5139`                 |
 | Scalar (API docs)  | `http://localhost:5139/scalar/v1`       |
 | OpenAPI spec       | `http://localhost:5139/openapi/v1.json` |
 | Health check       | `GET /api/health`                       |
+| Parking state      | `GET /api/parking/state`                |
+| Parking sync       | `POST /api/parking/sync`                |
 
 ### Gerar token JWT (aplicação)
 
@@ -256,6 +260,28 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -- --gen-app-token
 ---
 
 ## Docker
+
+### Stack Site + Simulador (recomendada para demo funcional)
+
+```bash
+docker compose -f docker-compose.site-simulator.yml up --build
+```
+
+Sobe: **site** (API + dashboard), **simulator** (UI interativa + envio de eventos), **postgres** e **redis**.
+
+URLs:
+
+- Site: `http://localhost:8080`
+- Simulator: `http://localhost:8081`
+
+![Site simulation](site-simulation.gif)
+
+Com essa stack voce consegue:
+
+- Visualizar a topologia e estado atual do estacionamento no Site.
+- Simular eventos de entrada/estacionamento/saida pelo Simulator.
+- Trocar perfil de topologia no Simulator e validar sincronizacao no Site.
+- Consultar receita por setor/data durante os testes.
 
 ### Stack básica
 

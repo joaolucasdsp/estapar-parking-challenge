@@ -11,87 +11,36 @@ namespace EstaparParkingChallenge.Site.Filters;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class RequireWebhookSignatureAttribute : Attribute, IAsyncAuthorizationFilter {
-	public async Task OnAuthorizationAsync(AuthorizationFilterContext context) {
+	public Task OnAuthorizationAsync(AuthorizationFilterContext context) {
 		var config = context.HttpContext.RequestServices.GetRequiredService<IOptions<WebhookSignatureConfig>>().Value;
 		if (!config.Enabled) {
-			return;
+			return Task.CompletedTask;
 		}
 
 		if (string.IsNullOrWhiteSpace(config.Secret)) {
 			setUnauthorized(context);
-			return;
+			return Task.CompletedTask;
 		}
 
-		if (!context.HttpContext.Request.Headers.TryGetValue(config.HeaderName, out var signatureHeader)) {
+		if (!context.HttpContext.Request.Headers.TryGetValue(config.HeaderName, out var providedSecret)) {
 			setUnauthorized(context);
-			return;
+			return Task.CompletedTask;
 		}
 
-		if (!tryParseSignatureHeader(signatureHeader.ToString(), out var timestamp, out var providedSignature)) {
+		if (!isValidSecret(config.Secret, providedSecret.ToString())) {
 			setUnauthorized(context);
-			return;
+			return Task.CompletedTask;
 		}
 
-		var payload = await readRequestBodyAsync(context);
-		var signedPayload = $"{timestamp}.{payload}";
-		var expectedSignature = computeSignature(signedPayload, config.Secret);
-
-		if (!fixedTimeEquals(expectedSignature, providedSignature)) {
-			setUnauthorized(context);
-			return;
-		}
+		return Task.CompletedTask;
 	}
 
 	private static void setUnauthorized(AuthorizationFilterContext context)
 		=> context.Result = new UnauthorizedResult();
 
-	private static async Task<string> readRequestBodyAsync(AuthorizationFilterContext context) {
-		context.HttpContext.Request.EnableBuffering();
-		using var reader = new StreamReader(context.HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
-		var payload = await reader.ReadToEndAsync(context.HttpContext.RequestAborted);
-		context.HttpContext.Request.Body.Position = 0;
-		return payload;
-	}
-
-	private static bool tryParseSignatureHeader(string signatureHeader, out long timestamp, out string signatureHex) {
-		timestamp = 0;
-		signatureHex = string.Empty;
-
-		if (string.IsNullOrWhiteSpace(signatureHeader)) {
-			return false;
-		}
-
-		var parts = signatureHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-		foreach (var part in parts) {
-			if (part.StartsWith("t=", StringComparison.OrdinalIgnoreCase)) {
-				if (!long.TryParse(part[2..], out timestamp)) {
-					return false;
-				}
-			} else if (part.StartsWith("v1=", StringComparison.OrdinalIgnoreCase)) {
-				signatureHex = part[3..];
-			}
-		}
-
-		if (timestamp == 0) {
-			return false;
-		}
-
-		return !string.IsNullOrWhiteSpace(signatureHex);
-	}
-
-	private static byte[] computeSignature(string signedPayload, string secret) {
-		var key = Encoding.UTF8.GetBytes(secret);
-		var payloadBytes = Encoding.UTF8.GetBytes(signedPayload);
-		using var hmac = new HMACSHA256(key);
-		return hmac.ComputeHash(payloadBytes);
-	}
-
-	private static bool fixedTimeEquals(byte[] expected, string providedHex) {
-		try {
-			var provided = Convert.FromHexString(providedHex);
-			return CryptographicOperations.FixedTimeEquals(expected, provided);
-		} catch {
-			return false;
-		}
+	private static bool isValidSecret(string expectedSecret, string providedSecret) {
+		var expected = Encoding.UTF8.GetBytes(expectedSecret.Trim());
+		var provided = Encoding.UTF8.GetBytes(providedSecret.Trim());
+		return CryptographicOperations.FixedTimeEquals(expected, provided);
 	}
 }

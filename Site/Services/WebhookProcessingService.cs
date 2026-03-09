@@ -3,7 +3,10 @@ using EstaparParkingChallenge.Api.Parking;
 using EstaparParkingChallenge.Site.Classes;
 using EstaparParkingChallenge.Site.Entities;
 
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+
+using Npgsql;
 
 namespace EstaparParkingChallenge.Site.Services;
 
@@ -28,27 +31,22 @@ public class WebhookProcessingService(
 
 		var normalizedPlate = request.LicensePlate.Trim().ToUpperInvariant();
 		var eventType = parseEventType(request.EventType);
-		var eventTime = getEventTime(request, eventType);
-		var idempotencyKey = buildIdempotencyKey(normalizedPlate, eventType, eventTime, request.Latitude, request.Longitude);
-
-		if (await isDuplicateEventAsync(idempotencyKey, cancellationToken)) {
-			ignoreEvent(eventType, normalizedPlate);
-			return;
-		}
-
 		var session = await dbContext.ParkingSessions
 			.OrderByDescending(x => x.EntryTime)
 			.FirstOrDefaultAsync(x => x.LicensePlate == normalizedPlate && x.ExitTime == null, cancellationToken);
+		var eventTime = getEventTime(request, eventType);
+		var idempotencyKey = buildIdempotencyKey(normalizedPlate, eventType, eventTime, request.Latitude, request.Longitude, session);
 
 		await processEventAsync(eventType, normalizedPlate, request, eventTime, session, cancellationToken);
 		await saveProcessedEventAsync(idempotencyKey, normalizedPlate, eventType, eventTime, cancellationToken);
-		await dbContext.SaveChangesAsync(cancellationToken);
-	}
 
-	private async Task<bool> isDuplicateEventAsync(string idempotencyKey, CancellationToken cancellationToken) {
-		return await dbContext.ParkingWebhookEvents
-			.AsNoTracking()
-			.AnyAsync(x => x.IdempotencyKey == idempotencyKey, cancellationToken);
+		try {
+			await dbContext.SaveChangesAsync(cancellationToken);
+		} catch (DbUpdateException e) when (isIdempotencyConflict(e)) {
+			// Concurrent duplicate webhook: unique index enforces idempotency.
+			dbContext.ChangeTracker.Clear();
+			ignoreEvent(eventType, normalizedPlate);
+		}
 	}
 
 	private async Task processEventAsync(ParkingEventType eventType, string normalizedPlate, WebhookEventRequest request, DateTimeOffset eventTime, ParkingSessionEntity? session, CancellationToken cancellationToken) {
@@ -193,10 +191,28 @@ public class WebhookProcessingService(
 		throw new ApiException(Api.ErrorCodes.ValidationError, "Invalid event_type", new { EventType = eventType });
 	}
 
-	private static string buildIdempotencyKey(string licensePlate, ParkingEventType eventType, DateTimeOffset eventTime, decimal? latitude, decimal? longitude) {
+	private static string buildIdempotencyKey(string licensePlate, ParkingEventType eventType, DateTimeOffset eventTime, decimal? latitude, decimal? longitude, ParkingSessionEntity? session) {
 		var lat = latitude?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
 		var lng = longitude?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
+
+		if (eventType == ParkingEventType.Parked) {
+			var sessionKey = session?.Id.ToString() ?? "no-session";
+			return $"{licensePlate}|{eventType}|{sessionKey}|{lat}|{lng}";
+		}
+
 		return $"{licensePlate}|{eventType}|{eventTime.ToUnixTimeMilliseconds()}|{lat}|{lng}";
+	}
+
+	private static bool isIdempotencyConflict(DbUpdateException exception) {
+		if (exception.InnerException is PostgresException postgresException) {
+			return postgresException.SqlState == "23505";
+		}
+
+		if (exception.InnerException is SqlException sqlException) {
+			return sqlException.Number == 2601 || sqlException.Number == 2627;
+		}
+
+		return false;
 	}
 
 	private async Task ensureGarageDataLoadedAsync(CancellationToken cancellationToken) {

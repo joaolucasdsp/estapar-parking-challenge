@@ -94,7 +94,8 @@ jobs:
 
       - name: Test with selected database
         env:
-          Database: ${{ matrix.database }}
-          ConnectionStrings__DefaultConnection: ${{ matrix.database == 'PostgreSql' && 'Server=localhost; Database=EstaparParkingChallengeTest; Port=5432;user id=postgres; password=admin; Pooling=true;Minimum Pool Size=0;Maximum Pool Size=25;' || 'Server=localhost;Database=EstaparParkingChallenge;User ID=sa;Password=1StrongPwd!!;TrustServerCertificate=True;' }}
+          Startup__Database: ${{ matrix.database == 'PostgreSql' && '1' || '2' }}
+          ConnectionStrings__PostgreSqlConnection: ${{ matrix.database == 'PostgreSql' && 'Server=localhost; Database=EstaparParkingChallengeTest; Port=5432;user id=postgres; password=admin; Pooling=true;Minimum Pool Size=0;Maximum Pool Size=25;' || '' }}
+          ConnectionStrings__SqlServerConnection: ${{ matrix.database == 'SqlServer' && 'Server=localhost;Database=EstaparParkingChallenge;User ID=sa;Password=1StrongPwd!!;TrustServerCertificate=True;' || '' }}
           ASPNETCORE_ENVIRONMENT: Test
         run: dotnet test ./Tests/EstaparParkingChallenge.Tests.csproj --configuration Release --no-build --filter "TestCategory=Integration"

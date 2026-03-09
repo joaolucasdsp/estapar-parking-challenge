@@ -6,7 +6,7 @@ namespace EstaparParkingChallenge.Api.Parking;
 public class WebhookEventRequest {
 	[Required]
 	[JsonPropertyName("license_plate")]
-	public required string LicensePlate { get; set; }
+	public string LicensePlate { get; set; } = string.Empty;
 
 	[JsonPropertyName("entry_time")]
 	public DateTimeOffset? EntryTime { get; set; }
@@ -22,5 +22,5 @@ public class WebhookEventRequest {
 
 	[Required]
 	[JsonPropertyName("event_type")]
-	public required string EventType { get; set; }
+	public string EventType { get; set; } = string.Empty;
 }

@@ -4,13 +4,13 @@ namespace EstaparParkingChallenge.Api;
 
 public class ErrorModel {
 	[JsonPropertyName("code")]
-	public required string CodeStr { get; set; }
+	public string CodeStr { get; set; } = string.Empty;
 
 	[JsonIgnore]
 	public ErrorCodes Code {
 		get {
 			try {
-				return Enum.Parse<ErrorCodes>(CodeStr);
+				return (ErrorCodes)Enum.Parse(typeof(ErrorCodes), CodeStr);
 			} catch {
 				return ErrorCodes.Unknown;
 			}
@@ -19,7 +19,7 @@ public class ErrorModel {
 			CodeStr = value.ToString();
 		}
 	}
-	public required string Message { get; set; }
+	public string Message { get; set; } = string.Empty;
 	public Dictionary<string, string>? Details { get; set; }
 	public override string ToString() {
 		var detailsString = string.Empty;

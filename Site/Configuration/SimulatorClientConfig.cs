@@ -13,5 +13,4 @@ public class WebhookSignatureConfig {
 	public bool Enabled { get; set; }
 	public string HeaderName { get; set; } = "Webhook-Signature";
 	public string? Secret { get; set; } = "whsec_9f8b3c7a4d1e2f6a8b9c0d3e5f7a1b2c4d6e8f9a0b1c3d5e7f9a2b4c6d8e0f1";
-	public int ToleranceSeconds { get; set; } = 300;
 }

@@ -2,7 +2,7 @@
 
 Backend para o desafio técnico da **Estapar**, implementado em **ASP.NET Core 10** com foco em código limpo, arquitetura extensível e boas práticas de engenharia.
 
-A API gerencia o ciclo completo de estacionamento — entrada, parada e saída de veículos — com precificação dinâmica baseada na taxa de ocupação, webhook com validação de assinatura HMAC-SHA256, idempotência de eventos e cálculo de receita por setor.
+A API gerencia o ciclo completo de estacionamento — entrada, parada e saída de veículos — com precificação dinâmica baseada na taxa de ocupação, webhook com validação de `webhook secret` via header, idempotência de eventos e cálculo de receita por setor.
 
 ---
 
@@ -50,7 +50,7 @@ A API gerencia o ciclo completo de estacionamento — entrada, parada e saída d
 │                                                             │
 │  Filters                                                    │
 │  ├── HandleExceptionFilter (ApiException → 422, 500)        │
-│  └── RequireWebhookSignatureAttribute (HMAC-SHA256)         │
+│  └── RequireWebhookSignatureAttribute (secret no header)    │
 │                                                             │
 │  Controllers                                                │
 │  ├── HealthController       GET  /api/health                │
@@ -93,7 +93,7 @@ Health check para probes de Kubernetes/Docker.
 
 ### `POST /webhook`
 
-Recebe eventos do simulador de estacionamento. Protegido por validação de assinatura HMAC-SHA256 (configurável).
+Recebe eventos do simulador de estacionamento. Protegido por validação de `webhook secret` em header (configurável).
 
 **Request:**
 
@@ -317,7 +317,7 @@ Todas as configurações são gerenciadas via `appsettings.{Environment}.json` c
 | `Jwt`              | `JwtConfig`              | Secret e Issuer para tokens JWT                        |
 | `Redis`            | `RedisConfig`            | Habilitar/conexão Redis (fallback: in-memory)          |
 | `SimulatorClient`  | `SimulatorClientConfig`  | URL do simulador, cache, sync na inicialização         |
-| `WebhookSignature` | `WebhookSignatureConfig` | Validação HMAC-SHA256 (habilitável, header, secret)    |
+| `WebhookSignature` | `WebhookSignatureConfig` | Validação por secret (habilitável, header, secret)     |
 | `Serilog`          | —                        | Logging estruturado com enrichers                      |
 
 ### Migrations
@@ -348,9 +348,9 @@ dotnet ef migrations add NomeDaMigration \
 
 O `AppDbContext` abstrato define todas as entidades e configurações, enquanto `PostgresDbContext` e `SqlServerDbContext` herdam e aplicam detalhes específicos do provider. A seleção é feita em runtime via `Startup:Database`, permitindo trocar de banco sem alterar código — apenas configuração.
 
-### Webhook com Assinatura e Idempotência
+### Webhook com Secret e Idempotência
 
-- **HMAC-SHA256** com `CryptographicOperations.FixedTimeEquals()` para comparação em tempo constante, prevenindo timing attacks
+- **Webhook Secret no Header** comparado em tempo constante com `CryptographicOperations.FixedTimeEquals()`
 - **Idempotência** via chave única por evento, armazenada em tabela dedicada com constraint único
 
 ### Precificação Dinâmica

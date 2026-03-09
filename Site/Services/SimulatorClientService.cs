@@ -10,6 +10,7 @@ namespace EstaparParkingChallenge.Site.Services;
 
 public interface ISimulatorClientService {
 	Task<GarageConfigurationResponse?> GetGarageConfigurationAsync(CancellationToken cancellationToken = default);
+	Task<GarageConfigurationResponse?> GetGarageConfigurationAsync(bool forceRefresh, CancellationToken cancellationToken = default);
 }
 
 public class SimulatorClientService(
@@ -29,8 +30,14 @@ public class SimulatorClientService(
 		LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5202, nameof(logGarageCacheReadFailed)), "Garage configuration cache read failed for key {CacheKey}");
 	private static readonly Action<ILogger, string, Exception?> logGarageCacheWriteFailed =
 		LoggerMessage.Define<string>(LogLevel.Warning, new EventId(5203, nameof(logGarageCacheWriteFailed)), "Garage configuration cache write failed for key {CacheKey}");
+	private static readonly Action<ILogger, string, Exception?> logGarageCacheBypass =
+		LoggerMessage.Define<string>(LogLevel.Information, new EventId(5204, nameof(logGarageCacheBypass)), "Garage configuration cache bypass requested for key {CacheKey}");
 
 	public async Task<GarageConfigurationResponse?> GetGarageConfigurationAsync(CancellationToken cancellationToken = default) {
+		return await GetGarageConfigurationAsync(forceRefresh: false, cancellationToken);
+	}
+
+	public async Task<GarageConfigurationResponse?> GetGarageConfigurationAsync(bool forceRefresh, CancellationToken cancellationToken = default) {
 		if (string.IsNullOrWhiteSpace(simulatorClientConfig.Value.GarageBaseUrl)) {
 			return null;
 		}
@@ -42,13 +49,17 @@ public class SimulatorClientService(
 
 		var cacheKey = $"simulator:garage:{simulatorClientConfig.Value.GarageBaseUrl.TrimEnd('/')}{endpoint}";
 		GarageConfigurationResponse? cachedPayload = null;
-		try {
-			var cachedJson = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
-			if (!string.IsNullOrWhiteSpace(cachedJson)) {
-				cachedPayload = JsonSerializer.Deserialize<GarageConfigurationResponse>(cachedJson);
+		if (!forceRefresh) {
+			try {
+				var cachedJson = await distributedCache.GetStringAsync(cacheKey, cancellationToken);
+				if (!string.IsNullOrWhiteSpace(cachedJson)) {
+					cachedPayload = JsonSerializer.Deserialize<GarageConfigurationResponse>(cachedJson);
+				}
+			} catch (Exception e) {
+				logGarageCacheReadFailed(logger, cacheKey, e);
 			}
-		} catch (Exception e) {
-			logGarageCacheReadFailed(logger, cacheKey, e);
+		} else {
+			logGarageCacheBypass(logger, cacheKey, null);
 		}
 
 		if (cachedPayload != null) {

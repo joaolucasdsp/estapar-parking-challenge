@@ -37,7 +37,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Docker
       ASPNETCORE_URLS: http://+:8080
       TargetApi__BaseUrl: http://site:8080
-      TargetApi__WebhookPath: /webhook
+      TargetApi__WebhookPath: /api/webhook
       TargetApi__SecretHeaderName: Webhook-Signature
       TargetApi__IgnoreTlsErrors: "true"
     restart: unless-stopped

@@ -55,8 +55,8 @@ A API gerencia o ciclo completo de estacionamento — entrada, parada e saída d
 │                                                             │
 │  Controllers                                                │
 │  ├── HealthController       GET  /api/health                │
-│  ├── WebhookController      POST /webhook                   │
-│  └── RevenueController      GET  /revenue                   │
+│  ├── WebhookController      POST /api/webhook               │
+│  └── RevenueController      GET  /api/revenue               │
 │                                                             │
 │  Services                                                   │
 │  ├── WebhookProcessingService  (ciclo Entry→Parked→Exit)    │
@@ -92,7 +92,7 @@ Health check para probes de Kubernetes/Docker.
 { "status": "ok", "timestamp": "2026-03-09T10:00:00.000Z" }
 ```
 
-### `POST /webhook`
+### `POST /api/webhook`
 
 Recebe eventos do simulador de estacionamento. Protegido por validação de `webhook secret` em header (configurável).
 
@@ -120,7 +120,7 @@ Recebe eventos do simulador de estacionamento. Protegido por validação de `web
 
 **Response:** `200 OK` (body vazio)
 
-### `GET /revenue?date={date}&sector={sector}`
+### `GET /api/revenue?date={date}&sector={sector}`
 
 Retorna a receita total de um setor em uma data específica.
 
@@ -247,6 +247,7 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -lp EstaparParking
 | OpenAPI spec       | `http://localhost:5139/openapi/v1.json` |
 | Health check       | `GET /api/health`                       |
 | Parking state      | `GET /api/parking/state`                |
+| Parking sync       | `POST /api/parking/sync`                |
 
 ### Gerar token JWT (aplicação)
 
@@ -273,6 +274,13 @@ URLs:
 - Site: `http://localhost:8080`
 - Simulator: `http://localhost:8081`
 
+Com essa stack voce consegue:
+
+- Visualizar a topologia e estado atual do estacionamento no Site.
+- Simular eventos de entrada/estacionamento/saida pelo Simulator.
+- Trocar perfil de topologia no Simulator e validar sincronizacao no Site.
+- Consultar receita por setor/data durante os testes.
+
 ### Stack básica
 
 ```bash
@@ -291,55 +299,6 @@ docker compose -f docker-compose-load-balancer.yml up --build --scale web=3
 Sobe: **3 instâncias web** + **NGINX** (round-robin na porta 8080) + **postgres** + **redis**
 
 A imagem Docker usa **multi-stage build** com Alpine para mínimo footprint.
-
----
-
-## Simulador
-
-O projeto inclui um simulador HTTP em `Simulator/` para facilitar testes reais da API principal.
-
-### Subir o simulador
-
-```bash
-dotnet run --project Simulator/EstaparParkingChallenge.Simulator.csproj
-```
-
-- Scalar: `http://localhost:5141/scalar/v1`
-- OpenAPI: `http://localhost:5141/openapi/v1.json`
-- Dashboard (frontend): `http://localhost:5141`
-
-### Endpoints do simulador
-
-- `GET /`
-  - Dashboard web para simular webhooks e validar health/revenue da API alvo.
-
-- `GET /garage`
-  - Retorna a configuração da garagem (setores + vagas) no mesmo formato esperado pela API.
-
-- `GET /target/health`
-  - Faz proxy para `GET /api/health` da API principal.
-
-- `GET /target/revenue?date=YYYY-MM-DD&sector=A`
-  - Faz proxy para `GET /revenue` da API principal.
-
-- `GET /target/parking/state`
-  - Faz proxy para `GET /api/parking/state` da API principal.
-
-- `POST /simulate/event`
-  - Repassa um único evento de webhook para a API principal (`TargetApi.BaseUrl + TargetApi.WebhookPath`).
-
-- `POST /simulate/flow`
-  - Executa fluxo completo `ENTRY -> PARKED -> EXIT` para uma placa.
-
-### Configuração do simulador
-
-Arquivo: `Simulator/appsettings.json`
-
-- `TargetApi.BaseUrl`: URL da API principal (default: `https://localhost:7139`)
-- `TargetApi.WebhookPath`: caminho do webhook (default: `/webhook`)
-- `TargetApi.SecretHeaderName`: header de secret (default: `Webhook-Signature`)
-- `TargetApi.Secret`: secret do webhook (defina se sua API estiver com validação habilitada)
-- `TargetApi.IgnoreTlsErrors`: ignora erro de certificado HTTPS local no proxy do simulador (default: `true`)
 
 ---
 

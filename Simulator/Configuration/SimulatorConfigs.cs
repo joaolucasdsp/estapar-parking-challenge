@@ -2,7 +2,7 @@ namespace EstaparParkingChallenge.Simulator.Configuration;
 
 public class TargetApiConfig {
 	public string BaseUrl { get; set; } = "https://localhost:7139";
-	public string WebhookPath { get; set; } = "/webhook";
+	public string WebhookPath { get; set; } = "/api/webhook";
 	public string SecretHeaderName { get; set; } = "Webhook-Signature";
 	public string? Secret { get; set; }
 	public bool IgnoreTlsErrors { get; set; } = true;

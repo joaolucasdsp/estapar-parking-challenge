@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace EstaparParkingChallenge.Site.Controllers;
 
 [ApiController]
+[Route("api/revenue")]
 public class RevenueController(
 	IParkingService parkingService
 ) : ControllerBase {
 
-	[HttpGet("revenue")]
+	[HttpGet]
 	[AllowAnonymous]
 	public async Task<ActionResult<RevenueResponse>> Revenue([FromQuery] DateOnly date, [FromQuery] string sector) {
 		if (string.IsNullOrWhiteSpace(sector)) {

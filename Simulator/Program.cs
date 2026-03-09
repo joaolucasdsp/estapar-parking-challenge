@@ -77,7 +77,7 @@ app.MapGet("/target/revenue", async (
 	CancellationToken cancellationToken
 ) => {
 	var client = httpClientFactory.CreateClient("TargetApi");
-	var path = $"/revenue?date={date:yyyy-MM-dd}&sector={Uri.EscapeDataString(sector)}";
+	var path = $"/api/revenue?date={date:yyyy-MM-dd}&sector={Uri.EscapeDataString(sector)}";
 	using var response = await client.GetAsync(path, cancellationToken);
 	var body = await response.Content.ReadAsStringAsync(cancellationToken);
 

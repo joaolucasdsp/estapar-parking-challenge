@@ -1,0 +1,14 @@
+services:
+  web:
+    image: ${DOCKER_REGISTRY-}estaparparkingchallenge
+    ports:
+      - 8080:8080
+    build:
+      context: .
+      dockerfile: Site/Dockerfile
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_PASSWORD=PostgresPssw!
+  redis:
+    image: redis:alpine

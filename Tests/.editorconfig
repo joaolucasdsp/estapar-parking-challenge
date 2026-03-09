@@ -1,0 +1,13 @@
+# editorconfig.org
+
+# NOT top-most EditorConfig file
+root = false
+
+# C# files
+[*.cs]
+
+# Naming rules
+# ------------
+
+# Async non-private methods (i.e. async controller actions) must be pascal case (but don't have to end in "Async")
+dotnet_naming_rule.async_non_private_methods_must_be_pascal_case_and_have_suffix.style = pascal_case_style

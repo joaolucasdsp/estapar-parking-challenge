@@ -9,7 +9,6 @@ namespace EstaparParkingChallenge.Site.Services;
 
 public interface IGarageSyncService {
 	Task<bool> SyncAsync(CancellationToken cancellationToken = default);
-	Task<bool> SyncAsync(bool forceRefresh = false, CancellationToken cancellationToken = default);
 }
 
 public class GarageSyncService(
@@ -18,7 +17,6 @@ public class GarageSyncService(
 	AppDbContext dbContext,
 	ILogger<GarageSyncService> logger
 ) : IGarageSyncService {
-	private static readonly SemaphoreSlim syncLock = new(1, 1);
 
 	private static readonly Action<ILogger, string, Exception?> logGarageSyncStarting =
 		LoggerMessage.Define<string>(LogLevel.Information, new EventId(5000, nameof(logGarageSyncStarting)), "Starting garage synchronization from {GarageEndpoint}");
@@ -30,100 +28,69 @@ public class GarageSyncService(
 		LoggerMessage.Define(LogLevel.Warning, new EventId(5003, nameof(logGarageSyncUsingMock)), "Simulator unavailable. Using mock garage configuration");
 
 	public async Task<bool> SyncAsync(CancellationToken cancellationToken = default) {
-		return await SyncAsync(forceRefresh: false, cancellationToken);
-	}
+		logGarageSyncStarting(logger, simulatorClientConfig.Value.GarageEndpoint, null);
 
-	public async Task<bool> SyncAsync(bool forceRefresh = false, CancellationToken cancellationToken = default) {
-		await syncLock.WaitAsync(cancellationToken);
+		GarageConfigurationResponse? payload;
 		try {
-			logGarageSyncStarting(logger, simulatorClientConfig.Value.GarageEndpoint, null);
-
-			GarageConfigurationResponse? payload;
-			try {
-				payload = await simulatorClientService.GetGarageConfigurationAsync(forceRefresh, cancellationToken);
-			} catch (Exception) when (simulatorClientConfig.Value.UseMockGarageOnFailure) {
-				logGarageSyncUsingMock(logger, null);
-				payload = createMockGarageConfiguration();
-			}
-
-			if (payload == null && simulatorClientConfig.Value.UseMockGarageOnFailure) {
-				logGarageSyncUsingMock(logger, null);
-				payload = createMockGarageConfiguration();
-			}
-
-			if (payload == null) {
-				logGarageSyncMissingPayload(logger, null);
-				return false;
-			}
-
-			var payloadSectorCodes = payload.Garage
-				.Select(x => x.Sector)
-				.Where(x => !string.IsNullOrWhiteSpace(x))
-				.ToHashSet(StringComparer.OrdinalIgnoreCase);
-			var payloadSpotIds = payload.Spots.Select(x => x.Id).ToHashSet();
-
-			var existingSectors = await dbContext.GarageSectors.ToDictionaryAsync(x => x.Sector, cancellationToken);
-			foreach (var sector in payload.Garage) {
-				if (existingSectors.TryGetValue(sector.Sector, out var existingSector)) {
-					existingSector.BasePrice = sector.BasePrice;
-					existingSector.MaxCapacity = sector.MaxCapacity;
-				} else {
-					await dbContext.GarageSectors.AddAsync(new GarageSectorEntity {
-						Sector = sector.Sector,
-						BasePrice = sector.BasePrice,
-						MaxCapacity = sector.MaxCapacity,
-					}, cancellationToken);
-				}
-			}
-
-			await dbContext.SaveChangesAsync(cancellationToken);
-			var sectorIdsByCode = await dbContext.GarageSectors
-				.ToDictionaryAsync(x => x.Sector, x => x.Id, cancellationToken);
-
-			var existingSpots = await dbContext.GarageSpots.ToDictionaryAsync(x => x.Id, cancellationToken);
-			foreach (var spot in payload.Spots) {
-				if (!sectorIdsByCode.TryGetValue(spot.Sector, out var garageSectorId)) {
-					continue;
-				}
-
-				if (existingSpots.TryGetValue(spot.Id, out var existingSpot)) {
-					existingSpot.GarageSectorId = garageSectorId;
-					existingSpot.Latitude = spot.Latitude;
-					existingSpot.Longitude = spot.Longitude;
-				} else {
-					await dbContext.GarageSpots.AddAsync(new GarageSpotEntity {
-						Id = spot.Id,
-						GarageSectorId = garageSectorId,
-						Latitude = spot.Latitude,
-						Longitude = spot.Longitude,
-						IsOccupied = false,
-					}, cancellationToken);
-				}
-			}
-
-			await dbContext.SaveChangesAsync(cancellationToken);
-
-			var obsoleteSpots = await dbContext.GarageSpots
-				.Where(x => !payloadSpotIds.Contains(x.Id))
-				.ToListAsync(cancellationToken);
-			if (obsoleteSpots.Count != 0) {
-				dbContext.GarageSpots.RemoveRange(obsoleteSpots);
-				await dbContext.SaveChangesAsync(cancellationToken);
-			}
-
-			var obsoleteSectors = await dbContext.GarageSectors
-				.Where(x => !payloadSectorCodes.Contains(x.Sector))
-				.ToListAsync(cancellationToken);
-			if (obsoleteSectors.Count != 0) {
-				dbContext.GarageSectors.RemoveRange(obsoleteSectors);
-				await dbContext.SaveChangesAsync(cancellationToken);
-			}
-
-			logGarageSyncCompleted(logger, payload.Garage.Count, payload.Spots.Count, null);
-			return true;
-		} finally {
-			syncLock.Release();
+			payload = await simulatorClientService.GetGarageConfigurationAsync(cancellationToken);
+		} catch (Exception) when (simulatorClientConfig.Value.UseMockGarageOnFailure) {
+			logGarageSyncUsingMock(logger, null);
+			payload = createMockGarageConfiguration();
 		}
+
+		if (payload == null && simulatorClientConfig.Value.UseMockGarageOnFailure) {
+			logGarageSyncUsingMock(logger, null);
+			payload = createMockGarageConfiguration();
+		}
+
+		if (payload == null) {
+			logGarageSyncMissingPayload(logger, null);
+			return false;
+		}
+
+		var existingSectors = await dbContext.GarageSectors.ToDictionaryAsync(x => x.Sector, cancellationToken);
+		foreach (var sector in payload.Garage) {
+			if (existingSectors.TryGetValue(sector.Sector, out var existingSector)) {
+				existingSector.BasePrice = sector.BasePrice;
+				existingSector.MaxCapacity = sector.MaxCapacity;
+			} else {
+				await dbContext.GarageSectors.AddAsync(new GarageSectorEntity {
+					Sector = sector.Sector,
+					BasePrice = sector.BasePrice,
+					MaxCapacity = sector.MaxCapacity,
+				}, cancellationToken);
+			}
+		}
+
+		await dbContext.SaveChangesAsync(cancellationToken);
+		var sectorIdsByCode = await dbContext.GarageSectors
+			.ToDictionaryAsync(x => x.Sector, x => x.Id, cancellationToken);
+
+		var existingSpots = await dbContext.GarageSpots.ToDictionaryAsync(x => x.Id, cancellationToken);
+		foreach (var spot in payload.Spots) {
+			if (!sectorIdsByCode.TryGetValue(spot.Sector, out var garageSectorId)) {
+				continue;
+			}
+
+			if (existingSpots.TryGetValue(spot.Id, out var existingSpot)) {
+				existingSpot.GarageSectorId = garageSectorId;
+				existingSpot.Latitude = spot.Latitude;
+				existingSpot.Longitude = spot.Longitude;
+			} else {
+				await dbContext.GarageSpots.AddAsync(new GarageSpotEntity {
+					Id = spot.Id,
+					GarageSectorId = garageSectorId,
+					Latitude = spot.Latitude,
+					Longitude = spot.Longitude,
+					IsOccupied = false,
+				}, cancellationToken);
+			}
+		}
+
+		await dbContext.SaveChangesAsync(cancellationToken);
+
+		logGarageSyncCompleted(logger, payload.Garage.Count, payload.Spots.Count, null);
+		return true;
 	}
 
 	private static GarageConfigurationResponse createMockGarageConfiguration() {

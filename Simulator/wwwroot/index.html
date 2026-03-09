@@ -63,15 +63,18 @@
         <h2>Parking Map</h2>
         <span id="updateStamp" class="stamp">no updates yet</span>
       </div>
-      <div id="summary" class="summary"></div>
-      <div id="topology" class="topology"></div>
-    </section>
-
-    <section class="card">
-      <div class="board-head">
-        <h2>Event Log</h2>
+      <div class="board-layout">
+        <div class="map-pane">
+          <div id="summary" class="summary"></div>
+          <div id="topology" class="topology"></div>
+        </div>
+        <aside class="log-pane">
+          <div class="board-head">
+            <h2>Event Log</h2>
+          </div>
+          <pre id="output" class="output"></pre>
+        </aside>
       </div>
-      <pre id="output" class="output"></pre>
     </section>
   </main>
 

@@ -244,6 +244,26 @@ select {
   gap: 10px;
 }
 
+.board-layout {
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  align-items: start;
+}
+
+.map-pane {
+  min-width: 0;
+}
+
+.log-pane {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  background: #0f1526a6;
+}
+
 .sector {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -351,7 +371,7 @@ select {
 
 .output {
   margin: 0;
-  max-height: 320px;
+  max-height: 620px;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -386,5 +406,13 @@ select {
   .board-head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .board-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .output {
+    max-height: 300px;
   }
 }

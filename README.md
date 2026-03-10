@@ -202,7 +202,7 @@ EstaparParkingChallenge.sln
 │   └── Integration/              # Testes de integração (WebApplicationFactory)
 │
 ├── nginx/                        # Load balancer config
-├── docker-compose.yml            # Stack básica (web + postgres + redis)
+├── docker-compose.yml            # Stack API + simulador oficial + postgres + redis
 └── docker-compose-load-balancer.yml  # Produção (3× instâncias + NGINX)
 ```
 
@@ -261,7 +261,31 @@ dotnet run --project Site/EstaparParkingChallenge.Site.csproj -- --gen-app-token
 
 ## Docker
 
-### Stack Site + Simulador (recomendada para demo funcional)
+### Stack com simulador oficial (recomendada para teste funcional)
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+URLs:
+
+- Site (API + frontend): `http://localhost:3003`
+- Simulador (`/garage`): `http://localhost:3000/garage`
+
+Com essa stack:
+
+- A API sobe no endereço esperado pelo simulador: `http://localhost:3003`.
+- O simulador envia webhooks para `http://localhost:3003/webhook`.
+- O Site consome a topologia em `GET /garage` do simulador na inicialização.
+- Postgres e Redis sobem junto para suportar persistência e cache.
+
+Se quiser resetar completamente o ambiente antes de subir de novo:
+
+```bash
+docker compose -f docker-compose.yml down -v --remove-orphans
+```
+
+### Stack Site + Simulador local (demo visual da UI custom)
 
 ```bash
 docker compose -f docker-compose.site-simulator.yml up --build
@@ -282,15 +306,6 @@ Com essa stack voce consegue:
 - Simular eventos de entrada/estacionamento/saida pelo Simulator.
 - Trocar perfil de topologia no Simulator e validar sincronizacao no Site.
 - Consultar receita por setor/data durante os testes.
-
-### Stack básica
-
-```bash
-docker-compose up --build
-# API: http://localhost:8080
-```
-
-Sobe: **web** (API) + **postgres** (banco) + **redis** (cache)
 
 ### Com load balancer (produção)
 

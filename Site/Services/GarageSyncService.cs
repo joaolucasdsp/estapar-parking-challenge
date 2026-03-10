@@ -90,13 +90,14 @@ public class GarageSyncService(
 					existingSpot.GarageSectorId = garageSectorId;
 					existingSpot.Latitude = spot.Latitude;
 					existingSpot.Longitude = spot.Longitude;
+					existingSpot.IsOccupied = spot.IsOccupied;
 				} else {
 					await dbContext.GarageSpots.AddAsync(new GarageSpotEntity {
 						Id = spot.Id,
 						GarageSectorId = garageSectorId,
 						Latitude = spot.Latitude,
 						Longitude = spot.Longitude,
-						IsOccupied = false,
+						IsOccupied = spot.IsOccupied,
 					}, cancellationToken);
 				}
 			}

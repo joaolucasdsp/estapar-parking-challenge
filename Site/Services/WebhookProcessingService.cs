@@ -61,7 +61,7 @@ public class WebhookProcessingService(
 				await handleExitAsync(eventTime, session, cancellationToken);
 				return;
 			default:
-					throw new ApiException(Api.ErrorCodes.UnsupportedParkingEventType, "Unsupported event type");
+				throw new ApiException(Api.ErrorCodes.UnsupportedParkingEventType, "Unsupported event type");
 		}
 	}
 

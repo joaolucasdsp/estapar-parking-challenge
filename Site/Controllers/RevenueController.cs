@@ -8,6 +8,7 @@ namespace EstaparParkingChallenge.Site.Controllers;
 
 [ApiController]
 [Route("api/revenue")]
+[Route("revenue")]
 public class RevenueController(
 	IParkingService parkingService
 ) : ControllerBase {

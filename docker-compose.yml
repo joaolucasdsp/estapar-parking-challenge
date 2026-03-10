@@ -1,14 +1,58 @@
 services:
   web:
     image: ${DOCKER_REGISTRY-}estaparparkingchallenge
-    ports:
-      - 8080:8080
     build:
       context: .
       dockerfile: Site/Dockerfile
+    restart: unless-stopped
+    init: true
+    network_mode: "service:simulator"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      simulator:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:3003
+      ConnectionStrings__DefaultConnection: Server=postgres; Database=EstaparParkingChallenge; Port=5432;user id=postgres; password=PostgresPssw!; Pooling=true;Minimum Pool Size=0;Maximum Pool Size=25;
+      Redis__ConnectionString: redis:6379
+      SimulatorClient__GarageBaseUrl: http://localhost:3000
+      SimulatorClient__GarageEndpoint: /garage
+      SimulatorClient__SyncGarageOnStartup: "true"
+      SimulatorClient__UseMockGarageOnFailure: "false"
+
+  simulator:
+    image: cfontes0estapar/garage-sim:1.0.0
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+      - 3003:3003
+
   postgres:
     image: postgres:14-alpine
+    restart: unless-stopped
+    ports:
+      - 55432:5432
     environment:
+      - POSTGRES_DB=EstaparParkingChallenge
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=PostgresPssw!
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d EstaparParkingChallenge"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
   redis:
     image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - 56379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15

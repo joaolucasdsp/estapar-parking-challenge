@@ -104,4 +104,15 @@ public class RevenueAsyncTests : IntegrationDatabaseTestBase {
 		var amount = json.RootElement.GetProperty("amount").GetDecimal();
 		Assert.AreEqual(0m, amount);
 	}
+
+	[TestMethod]
+	public async Task RevenueAliasShouldReturnRevenueAsync() {
+		await ExecuteScopeAsync(async serviceProvider => {
+			var databaseManager = serviceProvider.GetRequiredService<TestDatabaseManager>();
+			await databaseManager.SeedGarageAsync(capacity: 10, basePrice: 10m);
+		});
+
+		var revenueResponse = await Client.GetAsync("/revenue?date=2025-01-01&sector=A");
+		Assert.AreEqual(HttpStatusCode.OK, revenueResponse.StatusCode);
+	}
 }

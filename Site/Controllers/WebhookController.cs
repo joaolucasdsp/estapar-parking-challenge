@@ -10,6 +10,7 @@ namespace EstaparParkingChallenge.Site.Controllers;
 [ApiController]
 [AllowAnonymous]
 [Route("api/webhook")]
+[Route("webhook")]
 public class WebhookController(
 	IWebhookProcessingService webhookProcessingService
 ) : ControllerBase {

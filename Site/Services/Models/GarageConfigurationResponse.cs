@@ -14,11 +14,20 @@ public class GarageSectorResponse {
 	[JsonPropertyName("sector")]
 	public required string Sector { get; set; }
 
-	[JsonPropertyName("basePrice")]
+	[JsonPropertyName("base_price")]
 	public decimal BasePrice { get; set; }
 
 	[JsonPropertyName("max_capacity")]
 	public int MaxCapacity { get; set; }
+
+	[JsonPropertyName("open_hour")]
+	public string? OpenHour { get; set; }
+
+	[JsonPropertyName("close_hour")]
+	public string? CloseHour { get; set; }
+
+	[JsonPropertyName("duration_limit_minutes")]
+	public int? DurationLimitMinutes { get; set; }
 }
 
 public class GarageSpotResponse {
@@ -33,4 +42,7 @@ public class GarageSpotResponse {
 
 	[JsonPropertyName("lng")]
 	public decimal Longitude { get; set; }
+
+	[JsonPropertyName("occupied")]
+	public bool IsOccupied { get; set; }
 }

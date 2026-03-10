@@ -158,12 +158,15 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		if (activeSession.SpotId.HasValue) {
-			var spot = await dbContext.GarageSpots.FirstOrDefaultAsync(x => x.Id == activeSession.SpotId.Value, cancellationToken);
-			if (spot != null) {
-				spot.IsOccupied = false;
-				spot.OccupiedByLicensePlate = null;
-			}
+		if (!activeSession.IsParked || !activeSession.SpotId.HasValue) {
+			ignoreEvent(ParkingEventType.Exit, activeSession.LicensePlate);
+			return;
+		}
+
+		var spot = await dbContext.GarageSpots.FirstOrDefaultAsync(x => x.Id == activeSession.SpotId.Value, cancellationToken);
+		if (spot != null) {
+			spot.IsOccupied = false;
+			spot.OccupiedByLicensePlate = null;
 		}
 
 		activeSession.ExitTime = exitTime;

@@ -61,7 +61,7 @@ public class WebhookProcessingService(
 				await handleExitAsync(eventTime, session, cancellationToken);
 				return;
 			default:
-				throw new ApiException(Api.ErrorCodes.ValidationError, "Unsupported event type");
+				throw new ApiException(Api.ErrorCodes.UnsupportedParkingEventType, "Unsupported event type");
 		}
 	}
 
@@ -182,7 +182,7 @@ public class WebhookProcessingService(
 			return parsed;
 		}
 
-		throw new ApiException(Api.ErrorCodes.ValidationError, "Invalid event_type", new { EventType = eventType });
+		throw new ApiException(Api.ErrorCodes.InvalidParkingEventType, "Invalid event_type", new { EventType = eventType });
 	}
 
 	private static string buildIdempotencyKey(string licensePlate, ParkingEventType eventType, DateTimeOffset eventTime, decimal? latitude, decimal? longitude, ParkingSessionEntity? session) {

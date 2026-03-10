@@ -4,11 +4,8 @@ namespace EstaparParkingChallenge.Api {
 
 	public enum ErrorCodes {
 		Unknown,
-		ValidationError,
-		NotFound,
-		Conflict,
-		Unauthorized,
-		Forbidden,
+		UnsupportedParkingEventType,
+		InvalidParkingEventType,
 	}
 
 	public enum ParkingEventType {

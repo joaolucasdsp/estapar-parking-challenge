@@ -16,6 +16,9 @@ public class ParkingSessionEntity {
 	[MaxLength(20)]
 	public string? Sector { get; set; }
 
+	public int? GarageSectorId { get; set; }
+	public GarageSectorEntity? GarageSector { get; set; }
+
 	public DateTimeOffset EntryTime { get; set; }
 
 	public DateTimeOffset? ExitTime { get; set; }

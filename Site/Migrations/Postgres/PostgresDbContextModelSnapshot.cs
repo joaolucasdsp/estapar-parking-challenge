@@ -108,6 +108,9 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                     b.Property<DateTimeOffset?>("ExitTime")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("GarageSectorId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsParked")
                         .HasColumnType("boolean");
 
@@ -124,6 +127,8 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GarageSectorId", "ExitTime");
 
                     b.HasIndex("LicensePlate", "ExitTime");
 
@@ -178,6 +183,16 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                         .HasForeignKey("GarageSectorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("GarageSector");
+                });
+
+            modelBuilder.Entity("EstaparParkingChallenge.Site.Entities.ParkingSessionEntity", b =>
+                {
+                    b.HasOne("EstaparParkingChallenge.Site.Entities.GarageSectorEntity", "GarageSector")
+                        .WithMany()
+                        .HasForeignKey("GarageSectorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("GarageSector");
                 });

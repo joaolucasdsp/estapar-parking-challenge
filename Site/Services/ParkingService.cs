@@ -27,7 +27,8 @@ public class ParkingService(
 
 		var amount = await dbContext.ParkingSessions
 			.AsNoTracking()
-			.Where(x => x.Sector == normalizedSector && x.ExitTime != null && x.ExitTime >= utcStart && x.ExitTime < utcEnd)
+			.Where(x => x.GarageSectorId != null && x.ExitTime != null && x.ExitTime >= utcStart && x.ExitTime < utcEnd)
+			.Where(x => x.GarageSector!.Sector == normalizedSector)
 			.SumAsync(x => x.AmountCharged ?? 0m, cancellationToken);
 
 		return new RevenueResponse {

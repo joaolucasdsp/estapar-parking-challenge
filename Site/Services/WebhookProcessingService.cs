@@ -139,6 +139,7 @@ public class WebhookProcessingService(
 		spot.OccupiedByLicensePlate = normalizedPlate;
 		activeSession.SpotId = spot.Id;
 		activeSession.IsParked = true;
+		activeSession.GarageSectorId = spot.GarageSectorId;
 		activeSession.Sector = spot.GarageSector.Sector;
 		activeSession.BasePriceAtEntry = spot.GarageSector.BasePrice;
 	}
@@ -149,7 +150,7 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.BasePriceAtEntry.HasValue || string.IsNullOrWhiteSpace(activeSession.Sector)) {
+		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.GarageSectorId.HasValue || !activeSession.BasePriceAtEntry.HasValue || string.IsNullOrWhiteSpace(activeSession.Sector)) {
 			ignoreEvent(ParkingEventType.Exit, activeSession.LicensePlate);
 			return;
 		}

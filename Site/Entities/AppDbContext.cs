@@ -26,8 +26,13 @@ public class AppDbContext(
 		});
 
 		modelBuilder.Entity<ParkingSessionEntity>(entity => {
+			entity.HasOne(x => x.GarageSector)
+				.WithMany()
+				.HasForeignKey(x => x.GarageSectorId)
+				.OnDelete(DeleteBehavior.Restrict);
 			entity.HasIndex(x => new { x.LicensePlate, x.ExitTime });
 			entity.HasIndex(x => new { x.Sector, x.ExitTime });
+			entity.HasIndex(x => new { x.GarageSectorId, x.ExitTime });
 		});
 
 		modelBuilder.Entity<ParkingWebhookEventEntity>(entity => {

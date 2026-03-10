@@ -43,8 +43,8 @@ public class ParkingStateController(
 			);
 
 		var unparkedBySector = activeSessions
-			.Where(x => !x.IsParked)
-			.GroupBy(x => x.Sector)
+			.Where(x => !x.IsParked && !string.IsNullOrWhiteSpace(x.Sector))
+			.GroupBy(x => x.Sector!)
 			.ToDictionary(x => x.Key, x => x.Count(), StringComparer.OrdinalIgnoreCase);
 
 		var response = new {

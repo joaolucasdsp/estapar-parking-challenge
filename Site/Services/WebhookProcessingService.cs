@@ -94,25 +94,16 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		var targetSector = await dbContext.GarageSectors
-			.AsNoTracking()
-			.OrderBy(x => x.Sector)
-			.FirstOrDefaultAsync(cancellationToken);
-		if (targetSector == null) {
-			ignoreEvent(ParkingEventType.Entry, normalizedPlate);
-			return;
-		}
-
 		var occupancyBeforeEntry = totalCapacity == 0 ? 0m : (decimal)activeCount / totalCapacity;
 		var multiplier = parkingPricingService.GetPriceMultiplier(occupancyBeforeEntry);
 
 		await dbContext.ParkingSessions.AddAsync(new ParkingSessionEntity {
 			Id = Guid.NewGuid(),
 			LicensePlate = normalizedPlate,
-			Sector = targetSector.Sector,
+			Sector = null,
 			EntryTime = entryTime,
 			EntryPriceMultiplier = multiplier,
-			BasePriceAtEntry = targetSector.BasePrice,
+			BasePriceAtEntry = null,
 			IsParked = false,
 		}, cancellationToken);
 	}
@@ -158,7 +149,7 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		if (!activeSession.IsParked || !activeSession.SpotId.HasValue) {
+		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.BasePriceAtEntry.HasValue || string.IsNullOrWhiteSpace(activeSession.Sector)) {
 			ignoreEvent(ParkingEventType.Exit, activeSession.LicensePlate);
 			return;
 		}
@@ -173,7 +164,7 @@ public class WebhookProcessingService(
 		activeSession.AmountCharged = parkingPricingService.CalculateAmount(
 			activeSession.EntryTime,
 			activeSession.ExitTime,
-			activeSession.BasePriceAtEntry,
+			activeSession.BasePriceAtEntry.Value,
 			activeSession.EntryPriceMultiplier
 		);
 	}

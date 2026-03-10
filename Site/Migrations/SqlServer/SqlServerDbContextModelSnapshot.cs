@@ -94,7 +94,7 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("BasePriceAtEntry")
+                    b.Property<decimal?>("BasePriceAtEntry")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -117,7 +117,6 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Sector")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 

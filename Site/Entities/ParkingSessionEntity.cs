@@ -14,7 +14,7 @@ public class ParkingSessionEntity {
 	public required string LicensePlate { get; set; }
 
 	[MaxLength(20)]
-	public required string Sector { get; set; }
+	public string? Sector { get; set; }
 
 	public DateTimeOffset EntryTime { get; set; }
 
@@ -24,7 +24,7 @@ public class ParkingSessionEntity {
 	public decimal EntryPriceMultiplier { get; set; }
 
 	[Precision(18, 2)]
-	public decimal BasePriceAtEntry { get; set; }
+	public decimal? BasePriceAtEntry { get; set; }
 
 	[Precision(18, 2)]
 	public decimal? AmountCharged { get; set; }

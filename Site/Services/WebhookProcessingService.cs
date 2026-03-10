@@ -100,7 +100,6 @@ public class WebhookProcessingService(
 		await dbContext.ParkingSessions.AddAsync(new ParkingSessionEntity {
 			Id = Guid.NewGuid(),
 			LicensePlate = normalizedPlate,
-			Sector = null,
 			EntryTime = entryTime,
 			EntryPriceMultiplier = multiplier,
 			BasePriceAtEntry = null,
@@ -140,7 +139,6 @@ public class WebhookProcessingService(
 		activeSession.SpotId = spot.Id;
 		activeSession.IsParked = true;
 		activeSession.GarageSectorId = spot.GarageSectorId;
-		activeSession.Sector = spot.GarageSector.Sector;
 		activeSession.BasePriceAtEntry = spot.GarageSector.BasePrice;
 	}
 
@@ -150,7 +148,7 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.GarageSectorId.HasValue || !activeSession.BasePriceAtEntry.HasValue || string.IsNullOrWhiteSpace(activeSession.Sector)) {
+		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.GarageSectorId.HasValue || !activeSession.BasePriceAtEntry.HasValue) {
 			ignoreEvent(ParkingEventType.Exit, activeSession.LicensePlate);
 			return;
 		}

@@ -109,6 +109,7 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                         .HasColumnType("datetimeoffset");
 
                     b.Property<int?>("GarageSectorId")
+                        .HasMaxLength(20)
                         .HasColumnType("int");
 
                     b.Property<bool>("IsParked")
@@ -116,10 +117,6 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Sector")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
@@ -131,8 +128,6 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                     b.HasIndex("GarageSectorId", "ExitTime");
 
                     b.HasIndex("LicensePlate", "ExitTime");
-
-                    b.HasIndex("Sector", "ExitTime");
 
                     b.ToTable("ParkingSessions");
                 });

@@ -14,8 +14,6 @@ public class ParkingSessionEntity {
 	public required string LicensePlate { get; set; }
 
 	[MaxLength(20)]
-	public string? Sector { get; set; }
-
 	public int? GarageSectorId { get; set; }
 	public GarageSectorEntity? GarageSector { get; set; }
 

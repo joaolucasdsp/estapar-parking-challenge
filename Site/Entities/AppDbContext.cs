@@ -31,7 +31,6 @@ public class AppDbContext(
 				.HasForeignKey(x => x.GarageSectorId)
 				.OnDelete(DeleteBehavior.Restrict);
 			entity.HasIndex(x => new { x.LicensePlate, x.ExitTime });
-			entity.HasIndex(x => new { x.Sector, x.ExitTime });
 			entity.HasIndex(x => new { x.GarageSectorId, x.ExitTime });
 		});
 

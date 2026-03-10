@@ -43,16 +43,16 @@ public class ParkingStateController(
 			);
 
 		var unparkedBySector = activeSessions
-			.Where(x => !x.IsParked)
-			.GroupBy(x => x.Sector)
-			.ToDictionary(x => x.Key, x => x.Count(), StringComparer.OrdinalIgnoreCase);
+			.Where(x => !x.IsParked && x.GarageSectorId.HasValue)
+			.GroupBy(x => x.GarageSectorId!.Value)
+			.ToDictionary(x => x.Key, x => x.Count());
 
 		var response = new {
 			timestamp = DateTimeOffset.UtcNow,
 			sectors = sectors.Select(sector => {
 				var occupiedCount = sector.Spots.Count(x => x.IsOccupied);
 				var availableCount = Math.Max(0, sector.MaxCapacity - occupiedCount);
-				unparkedBySector.TryGetValue(sector.Sector, out var pendingCount);
+				unparkedBySector.TryGetValue(sector.Id, out var pendingCount);
 
 				return new {
 					sector = sector.Sector,

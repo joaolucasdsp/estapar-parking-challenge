@@ -3,6 +3,7 @@ using System;
 using EstaparParkingChallenge.Site.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EstaparParkingChallenge.Site.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDbContext))]
-    partial class PostgresDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310133544_SessionStartsWithoutSectorOrBasePrice")]
+    partial class SessionStartsWithoutSectorOrBasePrice
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,10 +111,6 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                     b.Property<DateTimeOffset?>("ExitTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("GarageSectorId")
-                        .HasMaxLength(20)
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsParked")
                         .HasColumnType("boolean");
 
@@ -120,14 +119,18 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("Sector")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int?>("SpotId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GarageSectorId", "ExitTime");
-
                     b.HasIndex("LicensePlate", "ExitTime");
+
+                    b.HasIndex("Sector", "ExitTime");
 
                     b.ToTable("ParkingSessions");
                 });
@@ -178,16 +181,6 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                         .HasForeignKey("GarageSectorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("GarageSector");
-                });
-
-            modelBuilder.Entity("EstaparParkingChallenge.Site.Entities.ParkingSessionEntity", b =>
-                {
-                    b.HasOne("EstaparParkingChallenge.Site.Entities.GarageSectorEntity", "GarageSector")
-                        .WithMany()
-                        .HasForeignKey("GarageSectorId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("GarageSector");
                 });

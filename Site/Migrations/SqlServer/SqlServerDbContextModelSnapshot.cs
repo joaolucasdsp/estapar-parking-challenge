@@ -94,7 +94,7 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("BasePriceAtEntry")
+                    b.Property<decimal?>("BasePriceAtEntry")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -108,15 +108,14 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                     b.Property<DateTimeOffset?>("ExitTime")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int?>("GarageSectorId")
+                        .HasMaxLength(20)
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsParked")
                         .HasColumnType("bit");
 
                     b.Property<string>("LicensePlate")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Sector")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -126,9 +125,9 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LicensePlate", "ExitTime");
+                    b.HasIndex("GarageSectorId", "ExitTime");
 
-                    b.HasIndex("Sector", "ExitTime");
+                    b.HasIndex("LicensePlate", "ExitTime");
 
                     b.ToTable("ParkingSessions");
                 });
@@ -179,6 +178,16 @@ namespace EstaparParkingChallenge.Site.Migrations.SqlServer
                         .HasForeignKey("GarageSectorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("GarageSector");
+                });
+
+            modelBuilder.Entity("EstaparParkingChallenge.Site.Entities.ParkingSessionEntity", b =>
+                {
+                    b.HasOne("EstaparParkingChallenge.Site.Entities.GarageSectorEntity", "GarageSector")
+                        .WithMany()
+                        .HasForeignKey("GarageSectorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("GarageSector");
                 });

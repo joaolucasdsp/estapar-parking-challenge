@@ -3,6 +3,7 @@ using System;
 using EstaparParkingChallenge.Site.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EstaparParkingChallenge.Site.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDbContext))]
-    partial class PostgresDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310133844_AddParkingSessionGarageSectorFk")]
+    partial class AddParkingSessionGarageSectorFk
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,7 +112,6 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("GarageSectorId")
-                        .HasMaxLength(20)
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsParked")
@@ -117,6 +119,10 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Sector")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -128,6 +134,8 @@ namespace EstaparParkingChallenge.Site.Migrations.Postgres
                     b.HasIndex("GarageSectorId", "ExitTime");
 
                     b.HasIndex("LicensePlate", "ExitTime");
+
+                    b.HasIndex("Sector", "ExitTime");
 
                     b.ToTable("ParkingSessions");
                 });

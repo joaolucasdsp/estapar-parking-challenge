@@ -94,25 +94,15 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		var targetSector = await dbContext.GarageSectors
-			.AsNoTracking()
-			.OrderBy(x => x.Sector)
-			.FirstOrDefaultAsync(cancellationToken);
-		if (targetSector == null) {
-			ignoreEvent(ParkingEventType.Entry, normalizedPlate);
-			return;
-		}
-
 		var occupancyBeforeEntry = totalCapacity == 0 ? 0m : (decimal)activeCount / totalCapacity;
 		var multiplier = parkingPricingService.GetPriceMultiplier(occupancyBeforeEntry);
 
 		await dbContext.ParkingSessions.AddAsync(new ParkingSessionEntity {
 			Id = Guid.NewGuid(),
 			LicensePlate = normalizedPlate,
-			Sector = targetSector.Sector,
 			EntryTime = entryTime,
 			EntryPriceMultiplier = multiplier,
-			BasePriceAtEntry = targetSector.BasePrice,
+			BasePriceAtEntry = null,
 			IsParked = false,
 		}, cancellationToken);
 	}
@@ -148,7 +138,7 @@ public class WebhookProcessingService(
 		spot.OccupiedByLicensePlate = normalizedPlate;
 		activeSession.SpotId = spot.Id;
 		activeSession.IsParked = true;
-		activeSession.Sector = spot.GarageSector.Sector;
+		activeSession.GarageSectorId = spot.GarageSectorId;
 		activeSession.BasePriceAtEntry = spot.GarageSector.BasePrice;
 	}
 
@@ -158,19 +148,22 @@ public class WebhookProcessingService(
 			return;
 		}
 
-		if (activeSession.SpotId.HasValue) {
-			var spot = await dbContext.GarageSpots.FirstOrDefaultAsync(x => x.Id == activeSession.SpotId.Value, cancellationToken);
-			if (spot != null) {
-				spot.IsOccupied = false;
-				spot.OccupiedByLicensePlate = null;
-			}
+		if (!activeSession.IsParked || !activeSession.SpotId.HasValue || !activeSession.GarageSectorId.HasValue || !activeSession.BasePriceAtEntry.HasValue) {
+			ignoreEvent(ParkingEventType.Exit, activeSession.LicensePlate);
+			return;
+		}
+
+		var spot = await dbContext.GarageSpots.FirstOrDefaultAsync(x => x.Id == activeSession.SpotId.Value, cancellationToken);
+		if (spot != null) {
+			spot.IsOccupied = false;
+			spot.OccupiedByLicensePlate = null;
 		}
 
 		activeSession.ExitTime = exitTime;
 		activeSession.AmountCharged = parkingPricingService.CalculateAmount(
 			activeSession.EntryTime,
 			activeSession.ExitTime,
-			activeSession.BasePriceAtEntry,
+			activeSession.BasePriceAtEntry.Value,
 			activeSession.EntryPriceMultiplier
 		);
 	}

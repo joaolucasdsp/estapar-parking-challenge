@@ -56,4 +56,20 @@ public class WebhookAsyncTests : IntegrationDatabaseTestBase {
 		});
 		Assert.AreEqual(HttpStatusCode.OK, exitResponse.StatusCode);
 	}
+
+	[TestMethod]
+	public async Task WebhookAliasShouldAcceptEventsAsync() {
+		await ExecuteScopeAsync(async serviceProvider => {
+			var databaseManager = serviceProvider.GetRequiredService<TestDatabaseManager>();
+			await databaseManager.SeedGarageAsync(capacity: 10, basePrice: 15m);
+		});
+
+		var entryResponse = await Client.PostAsJsonAsync("/webhook", new {
+			license_plate = "ALS0001",
+			entry_time = "2025-01-01T10:00:00.000Z",
+			event_type = "ENTRY",
+		});
+
+		Assert.AreEqual(HttpStatusCode.OK, entryResponse.StatusCode);
+	}
 }
